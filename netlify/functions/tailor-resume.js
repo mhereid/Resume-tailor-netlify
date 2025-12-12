@@ -206,6 +206,7 @@ Task:
       },
       body: JSON.stringify({
         model: OPENAI_MODEL,
+        reasoning_effort: "none",
         messages: [systemMessage, userMessage],
         temperature: 0.3,
       }),
