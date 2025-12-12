@@ -1,7 +1,7 @@
 // netlify/functions/tailor-resume.js
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-const OPENAI_MODEL = "gpt-5.1";
+const OPENAI_MODEL = "gpt-5.2";
 
 // Full baseline resume (external-facing, ATS-ready, not condensed)
 const BASELINE_RESUME = `
