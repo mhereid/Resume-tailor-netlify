@@ -10,27 +10,22 @@ async function redis(command, ...args) {
   return res.json();
 }
 
-exports.handler = async (event) => {
+exports.handler = async () => {
   try {
-    // Return last 50 entries
     const resp = await redis("LRANGE", "resume_history", "0", "49");
 
-    // Upstash returns { result: [...] } or { error: ... }
-    const rawList = resp?.result;
+    // Upstash may return { result: [...] } OR [...]
+    const raw =
+      Array.isArray(resp)
+        ? resp
+        : Array.isArray(resp?.result)
+        ? resp.result
+        : [];
 
-    if (!Array.isArray(rawList)) {
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history: [], note: "No history or Redis returned non-list." }),
-      };
-    }
-
-    const history = rawList
-      .map((s) => {
+    const history = raw
+      .map(item => {
         try {
-          const decoded = decodeURIComponent(s);
-          return JSON.parse(decoded);
+          return JSON.parse(decodeURIComponent(item));
         } catch {
           return null;
         }
@@ -42,10 +37,13 @@ exports.handler = async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ history }),
     };
-  } catch (e) {
+  } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "History server error", details: String(e) }),
+      body: JSON.stringify({
+        error: "History fetch failed",
+        details: String(err),
+      }),
     };
   }
 };
