@@ -4,7 +4,10 @@ const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL_PRIMARY = "gpt-5.2";
 const MODEL_FALLBACK = "gpt-4.1";
 
-// FULL BASELINE RESUME — VERBATIM, NO MODIFICATIONS
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+// FULL BASELINE RESUME — VERBATIM
 const BASELINE_RESUME = `
 MIKE HEREID
 
@@ -76,33 +79,28 @@ CERTIFICATIONS
 `;
 
 function stripHtml(html) {
-  return html
-    .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
-    .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\\s+/g, " ")
-    .trim();
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+async function redis(command, ...args) {
+  const url = `${REDIS_URL}/${command}/${args.join("/")}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+  });
+  return res.json();
 }
 
 async function callOpenAI(model, messages) {
   const res = await fetch(OPENAI_API_URL, {
     method: "POST",
     headers: {
-      Authorization: \`Bearer \${process.env.OPENAI_API_KEY}\`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.3,
-    }),
+    body: JSON.stringify({ model, messages, temperature: 0.3 }),
   });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(txt);
-  }
-
+  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
@@ -111,57 +109,52 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
+  const { jobUrl, mode = "full" } = JSON.parse(event.body || "{}");
+  if (!jobUrl) return { statusCode: 400, body: "Missing jobUrl" };
+
+  const jobHtml = await fetch(jobUrl).then(r => r.text());
+  const jobText = stripHtml(jobHtml);
+
+  const system = {
+    role: "system",
+    content:
+      "Rewrite the resume to align with the job description using ONLY the baseline resume. Do not invent facts.",
+  };
+
+  const user = {
+    role: "user",
+    content: `BASELINE RESUME:\n${BASELINE_RESUME}\n\nJOB DESCRIPTION:\n${jobText}`,
+  };
+
+  let modelUsed = MODEL_PRIMARY;
+  let data;
   try {
-    const { jobUrl, mode } = JSON.parse(event.body || "{}");
-
-    if (!jobUrl) {
-      return { statusCode: 400, body: "Missing jobUrl" };
-    }
-
-    const jobRes = await fetch(jobUrl);
-    const jobHtml = await jobRes.text();
-    const jobText = stripHtml(jobHtml);
-
-    const systemMessage = {
-      role: "system",
-      content:
-        "You are an expert resume writer. Rewrite the resume to align to the job description using ONLY the baseline resume. Do not invent or add facts.",
-    };
-
-    const userMessage = {
-      role: "user",
-      content: `
-BASELINE RESUME:
-${BASELINE_RESUME}
-
-JOB DESCRIPTION:
-${jobText}
-
-INSTRUCTIONS:
-Rewrite the resume to align strongly with the job description.
-Do not fabricate experience.
-Return only the final resume text.
-`,
-    };
-
-    let data;
-    try {
-      data = await callOpenAI(MODEL_PRIMARY, [systemMessage, userMessage]);
-    } catch {
-      data = await callOpenAI(MODEL_FALLBACK, [systemMessage, userMessage]);
-    }
-
-    const output = data.choices?.[0]?.message?.content || "";
-
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume: output }),
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: String(err) }),
-    };
+    data = await callOpenAI(MODEL_PRIMARY, [system, user]);
+  } catch {
+    modelUsed = MODEL_FALLBACK;
+    data = await callOpenAI(MODEL_FALLBACK, [system, user]);
   }
+
+  const resume = data.choices?.[0]?.message?.content || "";
+
+  const historyEntry = {
+    id: crypto.randomUUID(),
+    jobUrl,
+    mode,
+    modelUsed,
+    output: resume,
+    createdAt: new Date().toISOString(),
+  };
+
+  await redis("LPUSH", "resume_history", encodeURIComponent(JSON.stringify(historyEntry)));
+  await redis("LTRIM", "resume_history", "0", "49");
+
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      resume,        // for UI
+      historySaved: true
+    }),
+  };
 };
