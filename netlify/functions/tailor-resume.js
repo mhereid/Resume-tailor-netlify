@@ -235,7 +235,21 @@ Task:
 
     const data = await openaiResponse.json();
     const tailored = data.choices?.[0]?.message?.content || "";
+const entry = {
+  id: crypto.randomUUID(),
+  jobUrl,
+  mode,
+  output: tailored,
+  createdAt: new Date().toISOString(),
+};
 
+// Push to Redis list (single-user global history)
+await redis("LPUSH", "resume_history", encodeURIComponent(JSON.stringify(entry)));
+
+// Optional: cap history to last 50 entries
+await redis("LTRIM", "resume_history", "0", "49");
+
+    
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
