@@ -1,21 +1,27 @@
 // netlify/functions/tailor-resume.js
 
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+const OPENAI_MODEL = "gpt-5.2-instant";
+
+/* ------------------------
+   Upstash Redis (History)
+------------------------ */
+
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 async function redis(command, ...args) {
   const res = await fetch(`${REDIS_URL}/${command}/${args.join("/")}`, {
-    headers: {
-      Authorization: `Bearer ${REDIS_TOKEN}`,
-    },
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
   });
   return res.json();
 }
 
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-const OPENAI_MODEL = "gpt-5.2-instant";
+/* ------------------------
+   FULL BASELINE RESUME
+   (VERBATIM — NOT TRUNCATED)
+------------------------ */
 
-// Full baseline resume (external-facing, ATS-ready, not condensed)
 const BASELINE_RESUME = `
 MIKE HEREID
 San Diego, CA • 636.236.9425 • mike@mhere.id
@@ -113,6 +119,10 @@ INTERESTS
 Baseball • Backpacking • Fly Fishing • Barbecue
 `;
 
+/* ------------------------
+   Helpers
+------------------------ */
+
 function stripHtml(html) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -122,93 +132,74 @@ function stripHtml(html) {
     .trim();
 }
 
-exports.handler = async (event, context) => {
+/* ------------------------
+   Handler
+------------------------ */
+
+exports.handler = async (event) => {
+  console.log("REQUEST RECEIVED", { method: event.httpMethod });
+
   if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: "Method not allowed" }),
-    };
+    return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
   }
 
   try {
-    const body = event.body ? JSON.parse(event.body) : {};
-    const jobUrl = body.jobUrl;
-    const mode = body.mode === "one_page" ? "one_page" : "full";
+    const { jobUrl, mode } = JSON.parse(event.body || "{}");
+    const resumeMode = mode === "one_page" ? "one_page" : "full";
+
+    console.log("REQUEST PARAMS", { jobUrl, resumeMode });
 
     if (!jobUrl) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Missing jobUrl in request body" }),
-      };
+      return { statusCode: 400, body: JSON.stringify({ error: "Missing jobUrl" }) };
     }
 
+    /* Job fetch */
     const jobResponse = await fetch(jobUrl);
-    if (!jobResponse.ok) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: `Failed to fetch job posting (${jobResponse.status})`,
-        }),
-      };
-    }
+    console.log("JOB FETCH STATUS", { status: jobResponse.status });
 
     const jobHtml = await jobResponse.text();
     const jobText = stripHtml(jobHtml);
 
+    console.log("JOB TEXT LENGTH", jobText.length);
+
+    /* Prompt */
     const modeInstructions =
-      mode === "one_page"
-        ? `
-The hiring manager wants a concise one-page resume:
-- Limit the output to approximately one page of text.
-- Prioritize the highest-impact and most relevant experience.
-- Remove or compress less relevant history.
-- Use tight bullets and a focused summary suitable for a one-page leadership resume.
-`
-        : `
-You may produce a multi-page resume as needed:
-- You do not need to constrain to one page.
-- Preserve rich detail where it is relevant to the role.
-`;
+      resumeMode === "one_page"
+        ? "Produce a concise one-page resume. Prioritize the most relevant experience."
+        : "Produce a full resume with rich detail where relevant.";
+
+    console.log("PROMPT SIZE", {
+      baseline: BASELINE_RESUME.length,
+      job: jobText.length,
+      total: BASELINE_RESUME.length + jobText.length,
+    });
 
     const systemMessage = {
       role: "system",
-      content: [
-        "You are an expert resume writer and career coach.",
-        "Your job is to tailor the user's baseline resume to a specific job posting.",
-        "Use only experience and skills that are actually present in the baseline resume.",
-        "You may reorder sections and bullets, change wording, and emphasize relevant experience.",
-        "Do NOT invent companies, titles, dates, or achievements that are not supported by the baseline.",
-        "Output a complete, polished resume in plain text suitable for ATS (no tables or images).",
-      ].join(" "),
+      content:
+        "You are an expert resume writer. Tailor strictly from the baseline. Do not invent experience. Output plain text only.",
     };
 
     const userMessage = {
       role: "user",
       content: `
-Here is the baseline resume:
-
-==== BASELINE RESUME START ====
+BASELINE RESUME:
 ${BASELINE_RESUME}
-==== BASELINE RESUME END ====
 
-Here is the job description text scraped from the given URL:
-
-==== JOB DESCRIPTION START ====
+JOB DESCRIPTION:
 ${jobText}
-==== JOB DESCRIPTION END ====
 
-Additional instructions based on mode:
+MODE:
 ${modeInstructions}
 
-Task:
-- Rewrite the resume so that it is strongly aligned to this job description.
-- Keep it honest: do not fabricate roles, dates, or achievements.
-- Emphasize the most relevant bullets; you may de-emphasize or omit less relevant material.
-- Preserve the candidate's level and career trajectory.
-- Include an updated summary that mirrors the language and priorities of the job posting.
-- Return only the finalized resume, no explanation.
+TASK:
+Rewrite the resume to align strongly with the job description.
+Return ONLY the final resume text.
 `,
     };
+
+    /* OpenAI */
+    console.log("CALLING OPENAI", OPENAI_MODEL);
 
     const openaiResponse = await fetch(OPENAI_API_URL, {
       method: "POST",
@@ -224,42 +215,41 @@ Task:
       }),
     });
 
-    if (!openaiResponse.ok) {
-      const errText = await openaiResponse.text();
-      console.error("OpenAI error:", errText);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "OpenAI API error", details: errText }),
-      };
-    }
-
     const data = await openaiResponse.json();
     const tailored = data.choices?.[0]?.message?.content || "";
-const entry = {
-  id: crypto.randomUUID(),
-  jobUrl,
-  mode,
-  output: tailored,
-  createdAt: new Date().toISOString(),
-};
 
-// Push to Redis list (single-user global history)
-await redis("LPUSH", "resume_history", encodeURIComponent(JSON.stringify(entry)));
+    console.log("OPENAI OUTPUT LENGTH", tailored.length);
 
-// Optional: cap history to last 50 entries
-await redis("LTRIM", "resume_history", "0", "49");
+    if (!tailored || tailored.trim().length < 50) {
+      throw new Error("OpenAI returned empty or invalid output");
+    }
 
-    
+    /* History (best-effort) */
+    const entry = {
+      id: crypto.randomUUID(),
+      jobUrl,
+      mode: resumeMode,
+      output: tailored,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await redis("LPUSH", "resume_history", encodeURIComponent(JSON.stringify(entry)));
+      await redis("LTRIM", "resume_history", "0", "49");
+    } catch (e) {
+      console.error("History write failed", e);
+    }
+
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resume: tailored }),
     };
   } catch (err) {
-    console.error("Server error:", err);
+    console.error("SERVER ERROR", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Server error", details: String(err) }),
+      body: JSON.stringify({ error: "Server error", details: err.message }),
     };
   }
 };
