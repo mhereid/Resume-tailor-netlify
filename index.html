@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Resume Tailor – GPT-5.1</title>
+  <title>Resume Tailor – GPT-5.x</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- JSZip for DOCX generation -->
@@ -22,9 +22,7 @@
       --font-mono: "SF Mono", Menlo, Consolas, monospace;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -45,14 +43,13 @@
     /* NAV */
     .nav {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       background: rgba(15, 23, 42, 0.96);
       padding: 0.9rem 1.2rem;
       border-radius: 0.6rem;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      border: 1px solid rgba(148,163,184,0.25);
       margin-bottom: 1.25rem;
-      backdrop-filter: blur(10px);
     }
 
     .nav-left {
@@ -71,20 +68,18 @@
     .nav-title {
       font-size: 1rem;
       font-weight: 600;
-      letter-spacing: 0.04em;
     }
 
     .nav-sub {
       font-size: 0.75rem;
       color: var(--text-secondary);
-      margin-top: 2px;
     }
 
     .nav-right {
       font-size: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      padding: 0.2rem 0.55rem;
+      padding: 0.25rem 0.6rem;
       border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.35);
       color: var(--text-secondary);
     }
 
@@ -95,16 +90,16 @@
 
     @media (min-width: 1024px) {
       .main-layout {
-        grid-template-columns: 230px minmax(0, 1fr);
+        grid-template-columns: 230px minmax(0,1fr);
       }
     }
 
     /* SIDEBAR */
     .sidebar {
-      background: rgba(15, 23, 42, 0.96);
+      background: rgba(15,23,42,0.96);
       border-radius: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      padding: 0.9rem 0.9rem 1rem;
+      border: 1px solid rgba(148,163,184,0.25);
+      padding: 0.9rem;
     }
 
     .sidebar-title {
@@ -112,8 +107,7 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-secondary);
-      margin-bottom: 0.4rem;
-      padding: 0 0.4rem;
+      margin-bottom: 0.5rem;
     }
 
     .nav-link {
@@ -122,20 +116,20 @@
       border-radius: 0.4rem;
       font-size: 0.85rem;
       color: var(--text-secondary);
-      text-decoration: none;
+      cursor: pointer;
     }
 
     .nav-link.active {
-      background: rgba(55, 65, 81, 0.8);
+      background: rgba(55,65,81,0.8);
       color: var(--text-primary);
     }
 
-    /* MAIN CARD */
+    /* CARDS */
     .card {
-      background: rgba(15, 23, 42, 0.96);
+      background: rgba(15,23,42,0.96);
       border-radius: 0.9rem;
       padding: 1.4rem;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      border: 1px solid rgba(148,163,184,0.25);
       display: grid;
       gap: 1.5rem;
     }
@@ -152,93 +146,58 @@
       letter-spacing: 0.08em;
       color: var(--accent);
       font-weight: 600;
-      margin-bottom: 0.3rem;
     }
 
     h1 {
-      margin: 0 0 0.4rem;
+      margin: 0.4rem 0;
       font-size: 1.35rem;
     }
 
     .subtitle {
-      margin: 0;
-      color: var(--text-secondary);
       font-size: 0.9rem;
-      line-height: 1.4;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
     }
 
     label {
-      margin-top: 1rem;
-      margin-bottom: 0.3rem;
-      display: block;
+      font-size: 0.75rem;
       color: var(--text-secondary);
-      font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      font-weight: 600;
+      margin-top: 1rem;
+      display: block;
     }
 
-    input,
-    textarea {
+    input, textarea {
       width: 100%;
       background: var(--bg-input);
       border: 1px solid var(--border-subtle);
       padding: 0.65rem;
-      font-size: 0.9rem;
       border-radius: 0.5rem;
       color: var(--text-primary);
-      outline: none;
-      transition: 0.15s border, 0.15s box-shadow;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(255, 153, 0, 0.4);
+      font-size: 0.9rem;
     }
 
     textarea {
       min-height: 350px;
+      font-family: var(--font-mono);
       white-space: pre-wrap;
       resize: vertical;
-      font-family: var(--font-mono);
     }
 
     .mode-row {
       display: flex;
       gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-top: 0.25rem;
+      margin-top: 0.5rem;
       font-size: 0.85rem;
       color: var(--text-secondary);
     }
 
-    .mode-row label {
-      margin: 0;
-      text-transform: none;
-      letter-spacing: normal;
-      font-weight: 400;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
-    .mode-row input[type="radio"] {
-      width: auto;
-      accent-color: var(--accent);
-    }
-
     .action-row {
       display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 1.1rem;
-    }
-
-    @media (min-width: 600px) {
-      .action-row {
-        flex-direction: row;
-      }
+      gap: 0.6rem;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
     }
 
     button.primary {
@@ -248,350 +207,227 @@
       padding: 0.8rem 1rem;
       border-radius: 999px;
       font-weight: 600;
-      font-size: 0.95rem;
       cursor: pointer;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
-      transition: 0.15s transform, 0.15s box-shadow, 0.15s background;
       flex: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    button.primary:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
-    }
-
-    button.primary:active {
-      transform: translateY(0);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
     button.secondary {
       background: transparent;
-      color: var(--text-secondary);
+      border: 1px solid rgba(148,163,184,0.4);
       border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
       padding: 0.8rem 1rem;
-      font-size: 0.85rem;
+      color: var(--text-secondary);
       cursor: pointer;
-      flex: 0 0 auto;
-    }
-
-    button.secondary:hover {
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     .spinner {
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      border: 2px solid rgba(0, 0, 0, 0.2);
+      border: 2px solid rgba(0,0,0,0.2);
       border-top-color: #111827;
       animation: spin 0.7s linear infinite;
     }
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .status {
-      min-height: 1.2rem;
       font-size: 0.8rem;
-      margin-top: 0.6rem;
       color: var(--text-secondary);
+      margin-top: 0.6rem;
+      min-height: 1.2rem;
     }
 
     .output-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
     }
 
     .copy-btn {
       font-size: 0.75rem;
       padding: 0.25rem 0.6rem;
       border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
+      border: 1px solid rgba(148,163,184,0.4);
       background: transparent;
       color: var(--text-secondary);
       cursor: pointer;
-      transition: 0.15s border, 0.15s color;
-    }
-
-    .copy-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     .small-note {
       font-size: 0.75rem;
       color: var(--text-secondary);
-      margin-top: 0.4rem;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+<div class="container">
 
-    <!-- AWS-like top nav -->
-    <nav class="nav">
-      <div class="nav-left">
-        <div class="logo-dot"></div>
-        <div>
-          <div class="nav-title">Resume Tailor</div>
-          <div class="nav-sub">GPT-5.1 · Baseline: Mike Hereid</div>
-        </div>
+  <nav class="nav">
+    <div class="nav-left">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="nav-title">Resume Tailor</div>
+        <div class="nav-sub">GPT-5.x · Baseline: Mike Hereid</div>
       </div>
-      <div class="nav-right">Prototype</div>
-    </nav>
-
-    <div class="main-layout">
-      <!-- Sidebar (AWS console-ish) -->
-      <aside class="sidebar">
-        <div class="sidebar-title">Navigation</div>
-        <a class="nav-link active" href="#">Tailor Resume</a>
-        <a class="nav-link" id="historyTab">History</a>
-        <a class="nav-link" href="javascript:void(0)">Settings (future)</a>
-      </aside>
-
-      <!-- Main card -->
-      <main class="card">
-        <!-- LEFT SIDE -->
-        <section>
-          <div class="section-label">Job Posting</div>
-          <h1>Generate a tailored resume</h1>
-          <p class="subtitle">
-            Paste a job URL, choose full or one-page mode, and generate a tailored,
-            ATS-friendly resume based on your baseline.
-          </p>
-
-          <label for="jobUrl">Job Posting URL</label>
-          <input
-            id="jobUrl"
-            type="url"
-            placeholder="https://company.com/job/senior-cloud-role"
-          />
-
-          <label>Mode</label>
-          <div class="mode-row">
-            <label>
-              <input type="radio" name="mode" value="full" checked />
-              Full resume
-            </label>
-            <label>
-              <input type="radio" name="mode" value="one_page" />
-              One-page condensed
-            </label>
-          </div>
-
-          <div class="action-row">
-            <button class="primary" id="runButton">
-              <span id="btnLabel">Generate Tailored Resume</span>
-              <span class="spinner" id="spinner" style="display:none;"></span>
-            </button>
-            <button class="secondary" id="downloadDocxButton">
-              Download as DOCX
-            </button>
-          </div>
-
-          <div class="status" id="status"></div>
-        </section>
-
-        <!-- RIGHT SIDE -->
-        <section>
-          <div class="output-header">
-            <div class="section-label">Output</div>
-            <button id="copyButton" class="copy-btn">Copy</button>
-          </div>
-
-          <textarea
-            id="output"
-            placeholder="Your tailored resume will appear here."
-          ></textarea>
-
-          <p class="small-note">
-            Tip: After downloading as DOCX, open in Word or Google Docs to apply your visual template or export as PDF.
-          </p>
-        </section>
-      </main>
-      <section class="card" id="historyPanel" style="display:none;">
-  <div class="section-label">History</div>
-  <div id="historyList"></div>
-</section>
-
     </div>
+    <div class="nav-right">Prototype</div>
+  </nav>
+
+  <div class="main-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">Navigation</div>
+      <a class="nav-link active" id="tailorTab">Tailor Resume</a>
+      <a class="nav-link" id="historyTab">History</a>
+    </aside>
+
+    <main class="card" id="mainPanel">
+      <section>
+        <div class="section-label">Job Posting</div>
+        <h1>Generate a tailored resume</h1>
+        <p class="subtitle">Paste a job URL and generate a role-specific resume.</p>
+
+        <label for="jobUrl">Job Posting URL</label>
+        <input id="jobUrl" type="url" placeholder="https://company.com/job/role" />
+
+        <label>Mode</label>
+        <div class="mode-row">
+          <label><input type="radio" name="mode" value="full" checked /> Full</label>
+          <label><input type="radio" name="mode" value="one_page" /> One-page</label>
+        </div>
+
+        <div class="action-row">
+          <button class="primary" id="runButton">
+            <span id="btnLabel">Generate Tailored Resume</span>
+            <span class="spinner" id="spinner" style="display:none;"></span>
+          </button>
+          <button class="secondary" id="downloadDocxButton">Download DOCX</button>
+        </div>
+
+        <div class="status" id="status"></div>
+      </section>
+
+      <section>
+        <div class="output-header">
+          <div class="section-label">Output</div>
+          <button id="copyButton" class="copy-btn">Copy</button>
+        </div>
+
+        <textarea id="output" placeholder="Tailored resume output..."></textarea>
+        <p class="small-note">Apply your Word/Docs template after download.</p>
+      </section>
+    </main>
+
+    <section class="card" id="historyPanel" style="display:none;">
+      <div class="section-label">History</div>
+      <div id="historyList"></div>
+    </section>
   </div>
+</div>
 
-  <script>
-    const runButton = document.getElementById("runButton");
-    const spinner = document.getElementById("spinner");
-    const btnLabel = document.getElementById("btnLabel");
-    const statusEl = document.getElementById("status");
-    const outputEl = document.getElementById("output");
-    const jobUrlInput = document.getElementById("jobUrl");
-    const copyButton = document.getElementById("copyButton");
-    const downloadDocxButton = document.getElementById("downloadDocxButton");
+<script>
+const runButton = document.getElementById("runButton");
+const spinner = document.getElementById("spinner");
+const btnLabel = document.getElementById("btnLabel");
+const statusEl = document.getElementById("status");
+const outputEl = document.getElementById("output");
+const jobUrlInput = document.getElementById("jobUrl");
 
-    function getSelectedMode() {
-      const radios = document.querySelectorAll('input[name="mode"]');
-      for (const r of radios) {
-        if (r.checked) return r.value;
-      }
-      return "full";
-    }
+function getSelectedMode() {
+  return document.querySelector('input[name="mode"]:checked').value;
+}
 
-    function setLoading(isLoading) {
-      if (isLoading) {
-        runButton.disabled = true;
-        btnLabel.textContent = "Generating...";
-        spinner.style.display = "inline-block";
-      } else {
-        runButton.disabled = false;
-        btnLabel.textContent = "Generate Tailored Resume";
-        spinner.style.display = "none";
-      }
-    }
+function setLoading(on) {
+  runButton.disabled = on;
+  spinner.style.display = on ? "inline-block" : "none";
+  btnLabel.textContent = on ? "Generating…" : "Generate Tailored Resume";
+}
 
-    runButton.addEventListener("click", async () => {
-      const jobUrl = jobUrlInput.value.trim();
-      if (!jobUrl) {
-        statusEl.textContent = "Please enter a URL first.";
-        return;
-      }
+runButton.addEventListener("click", async () => {
+  const jobUrl = jobUrlInput.value.trim();
+  if (!jobUrl) {
+    statusEl.textContent = "Enter a job URL.";
+    return;
+  }
 
-      const mode = getSelectedMode();
-      statusEl.textContent = "Generating tailored resume...";
-      outputEl.value = "";
-      setLoading(true);
+  setLoading(true);
+  statusEl.textContent = "Generating…";
+  outputEl.value = "";
 
-      try {
-        const response = await fetch("/.netlify/functions/tailor-resume", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jobUrl, mode }),
-        });
-
-        if (!response.ok) {
-          let err;
-          try { err = await response.json(); } catch { err = {}; }
-          statusEl.textContent = "Error: " + (err.error || response.statusText);
-          setLoading(false);
-          return;
-        }
-
-        const data = await response.json();
-        outputEl.value = data.resume || "";
-        statusEl.textContent = "Done. Review the resume and tweak if needed.";
-      } catch (e) {
-        console.error(e);
-        statusEl.textContent = "Unexpected error. Check Netlify logs.";
-      } finally {
-        setLoading(false);
-      }
+  try {
+    const res = await fetch("/.netlify/functions/tailor-resume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobUrl, mode: getSelectedMode() })
     });
+    const data = await res.json();
+    outputEl.value = data.resume || "";
+    statusEl.textContent = "Done.";
+  } catch {
+    statusEl.textContent = "Error. Check logs.";
+  } finally {
+    setLoading(false);
+  }
+});
 
-    copyButton.addEventListener("click", async () => {
-      if (!outputEl.value) return;
-      try {
-        await navigator.clipboard.writeText(outputEl.value);
-        statusEl.textContent = "Copied to clipboard.";
-      } catch {
-        statusEl.textContent = "Copy failed. Select and copy manually.";
-      }
-    });
+async function loadHistory() {
+  try {
+    const res = await fetch("/.netlify/functions/history");
+    const data = await res.json();
+    return data.history || [];
+  } catch {
+    return [];
+  }
+}
 
-    // Simple DOCX generator using JSZip
-    function createDocxFromText(text) {
-      const zip = new JSZip();
+async function renderHistory() {
+  document.getElementById("mainPanel").style.display = "none";
+  document.getElementById("historyPanel").style.display = "block";
+  document.getElementById("tailorTab").classList.remove("active");
+  document.getElementById("historyTab").classList.add("active");
 
-      // Minimal DOCX structure
-      const contentTypes =
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-        '<Default Extension="xml" ContentType="application/xml"/>' +
-        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
-        "</Types>";
+  const list = document.getElementById("historyList");
+  list.innerHTML = "Loading…";
 
-      const rels =
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-        '<Relationship Id="R1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
-        "</Relationships>";
+  const history = await loadHistory();
+  if (!history.length) {
+    list.innerHTML = "<p class='small-note'>No history yet.</p>";
+    return;
+  }
 
-      function xmlEscape(str) {
-        return str
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-      }
+  list.innerHTML = history.map(h => `
+    <div style="padding:.6rem;border-bottom:1px solid rgba(148,163,184,.25);cursor:pointer"
+         onclick="loadFromHistory('${h.id}')">
+      <div>${h.jobUrl}</div>
+      <div style="font-size:.7rem;color:#9ca3af">${h.mode} • ${new Date(h.createdAt).toLocaleString()}</div>
+    </div>
+  `).join("");
+}
 
-      // Each paragraph = <w:p><w:r><w:t>...</w:t></w:r></w:p>
-      const paragraphs = text
-        .split(/\n{2,}/)
-        .map(p => {
-          const t = xmlEscape(p.trim());
-          if (!t) return "";
-          return `<w:p><w:r><w:t>${t}</w:t></w:r></w:p>`;
-        })
-        .join("");
+async function loadFromHistory(id) {
+  const history = await loadHistory();
+  const entry = history.find(h => h.id === id);
+  if (!entry) return;
 
-      const docXml =
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-        "<w:body>" +
-        paragraphs +
-        "</w:body>" +
-        "</w:document>";
+  jobUrlInput.value = entry.jobUrl;
+  outputEl.value = entry.output;
+  document.querySelector(`input[value="${entry.mode}"]`).checked = true;
 
-      zip.file("[Content_Types].xml", contentTypes);
-      zip.folder("_rels").file(".rels", rels);
-      zip.folder("word").file("document.xml", docXml);
+  document.getElementById("historyPanel").style.display = "none";
+  document.getElementById("mainPanel").style.display = "grid";
+  document.getElementById("historyTab").classList.remove("active");
+  document.getElementById("tailorTab").classList.add("active");
+}
 
-      return zip.generateAsync({
-        type: "blob",
-        mimeType:
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      });
-    }
-
-    downloadDocxButton.addEventListener("click", async () => {
-      const text = outputEl.value.trim();
-      if (!text) {
-        statusEl.textContent = "Nothing to download. Generate a resume first.";
-        return;
-      }
-
-      statusEl.textContent = "Building DOCX file...";
-      try {
-        const blob = await createDocxFromText(text);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        const mode = getSelectedMode();
-        const filename =
-          mode === "one_page"
-            ? "tailored_resume_one_page.docx"
-            : "tailored_resume_full.docx";
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        statusEl.textContent = "DOCX downloaded.";
-      } catch (e) {
-        console.error(e);
-        statusEl.textContent = "Failed to build DOCX.";
-      }
-    });
-  </script>
+document.getElementById("historyTab").addEventListener("click", renderHistory);
+document.getElementById("tailorTab").addEventListener("click", () => {
+  document.getElementById("historyPanel").style.display = "none";
+  document.getElementById("mainPanel").style.display = "grid";
+  document.getElementById("historyTab").classList.remove("active");
+  document.getElementById("tailorTab").classList.add("active");
+});
+</script>
 </body>
 </html>
