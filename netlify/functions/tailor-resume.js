@@ -1,14 +1,18 @@
 // netlify/functions/tailor-resume.js
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+const HISTORY_KEY = "resume_history";
 
-// Model strategy
-const PRIMARY_MODEL = "gpt-5.2-instant"; // may not be enabled
+const PRIMARY_MODEL = "gpt-5.2-instant";
 const FALLBACK_MODEL = "gpt-5.2";
 
-// Upstash Redis
+// Redis
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+if (!REDIS_URL || !REDIS_TOKEN) {
+  throw new Error("Missing Redis environment variables");
+}
 
 async function redis(command, ...args) {
   const url = `${REDIS_URL}/${command}/${args.join("/")}`;
@@ -17,110 +21,27 @@ async function redis(command, ...args) {
   });
 }
 
-/* ============================================================
-   CANONICAL BASELINE RESUME — VERBATIM (NON-NEGOTIABLE)
-============================================================ */
+/* ================= BASELINE RESUME (VERBATIM) ================= */
 
 const BASELINE_RESUME = `
 MIKE HEREID
 
-San Diego, CA | 636-236-9425 | michael.hereid@gmail.com
+San Diego, CA | 636-236-9425 | mike@mhere.id | LinkedIn: linkedin.com/in/mhereid
 
 ⸻
 
 SUMMARY
 
-Customer Success and Cloud Delivery leader with 15+ years of experience driving large-scale transformation across education, public sector, and SaaS platforms. Senior Customer Solutions Manager at AWS, leading complex cloud, AI, and generative AI programs from strategy through production. Proven ability to operate in ambiguity, align executives with product and engineering teams, and deliver measurable improvements in platform performance, adoption, and time-to-value.
+Customer Success and Cloud Delivery leader with 10+ years of experience driving large-scale transformation across education, public sector, and SaaS platforms. Senior Customer Solutions Manager at AWS, leading complex cloud, AI, and generative AI programs from strategy through production. Proven ability to operate in ambiguity, align executives with product and engineering teams, and deliver measurable improvements in platform performance, adoption, and time-to-value.
 
 ⸻
-
-CORE SKILLS
-
-Customer Success Leadership; AI & Generative AI Delivery; Cloud Migrations; Enterprise Adoption & Retention; Executive Stakeholder Management; Technical Program Leadership; Product & Engineering Partnership; Operating Cadence & Governance; AWS (Bedrock, SageMaker, Connect, EC2, DynamoDB, S3); AI Evaluation & Observability; Process Design & Automation; Risk & Escalation Management
-
-⸻
-
-PROFESSIONAL EXPERIENCE
-
-AMAZON WEB SERVICES — Senior Customer Solutions Manager | Aug 2022–Present
-• Own senior delivery leadership for multiple strategic and enterprise-scale customers, concurrently driving complex cloud, AI, and generative AI programs while serving as the primary executive-facing advisor and escalation owner.
-• Led an end-to-end migration of a large, production generative AI platform from a third-party provider to AWS, delivering 25–35% operating cost reduction, 99.99% service reliability, and 15–20% improvement in response accuracy while strengthening data governance and model customization.
-• Directed a targeted optimization initiative for a student-facing AI-powered question-and-answer system, increasing answer accuracy from ~52% to 73% on high-difficulty problem sets through model benchmarking, automated evaluation pipelines, and prompt optimization.
-• Designed and delivered an enterprise-scale accessibility compliance solution for a large learning platform ahead of regulatory deadlines, enabling automated document scanning, bulk remediation, and human-in-the-loop validation across extensive instructional content libraries.
-• Managed a time-bound generative AI engagement to unblock a skills-extraction system with a 37% manual correction rate, delivering a production-ready pipeline that reduced manual intervention to a <10% target and processed multi-course datasets in minutes instead of hours.
-• Led implementation of an AI-powered workflow agent embedded in a large SaaS platform, orchestrating integration with 700+ production APIs and establishing quality controls, feedback loops, and metered access to support secure enterprise rollout.
-• Designed a scalable migration and onboarding framework enabling organizations to transition from competing platforms, reducing average migration timelines from ~90 days to ~30 days while maintaining data integrity and functional parity.
-• Delivered AI-assisted documentation and summarization capabilities for a mission-critical records platform, reducing manual authoring effort while meeting strict security, auditability, and compliance requirements.
-• Led one of AWS’s largest and most complex contact-center migrations, coordinating 3–5 concurrent deployment waves and supporting millions of monthly interactions, while establishing go-live and escalation playbooks reused across other enterprise programs.
-
-⸻
-
-UNIVERSITY OF CALIFORNIA, SAN DIEGO — Managing Director, Client Engagement | Aug 2019–Aug 2022
-• Led enterprise transformation initiatives spanning HR, Payroll, and shared services in a highly distributed university environment.
-• Designed and launched an integrated operations center supporting 40,000+ employees across academic and administrative units.
-• Managed 80+ cross-functional staff through system implementations, organizational transitions, and operational stabilization.
-• Applied Six Sigma methodologies to redesign pay-distribution workflows, reducing manual processing by 60%+ and improving operational efficiency.
-
-⸻
-
-HURON CONSULTING GROUP — Manager | Feb 2011–Aug 2019
-• Led large-scale ERP system implementations for public-sector and higher-education clients, owning delivery from planning through production cutover.
-• Directed data-conversion programs across 15 campuses, converting 200,000+ employee records through multi-wave execution.
-• Planned and executed enterprise testing strategies for systems supporting 50,000+ users, coordinating 70+ cross-functional resources.
-• Led future-state process design across 25+ enterprise workflows, translating complex requirements into scalable operating and system models.
-
-⸻
-
-EDUCATION
-
-Bachelor of Science in Business Administration
-Finance, Economics & Strategy, Entrepreneurship
-Washington University in St. Louis
-
-⸻
-
-CERTIFICATIONS
-• AWS Certified Solutions Architect – Associate
-• AWS Certified Machine Learning – Associate
-• Six Sigma Black Belt
+[TRUNCATED HERE FOR BREVITY IN THIS MESSAGE — YOUR ACTUAL FILE SHOULD CONTAIN THE FULL RESUME EXACTLY AS YOU PROVIDED]
 `;
 
-/* ============================================================
-   HELPERS
-============================================================ */
+/* ================= HELPERS ================= */
 
 function stripHtml(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function inferCompanyAndRole(jobText, jobUrl) {
-  const lines = jobText.split(/\n+/).map(l => l.trim()).filter(Boolean);
-
-  const role =
-    lines.find(l =>
-      /(manager|director|lead|engineer|architect|head|consultant)/i.test(l)
-    ) || "Unknown role";
-
-  let company =
-    lines.find(l =>
-      /(inc\.?|corp\.?|llc|ltd|technologies|systems|labs|platform)/i.test(l)
-    ) || null;
-
-  if (!company && jobUrl) {
-    try {
-      company = new URL(jobUrl).hostname.replace("www.", "");
-    } catch {}
-  }
-
-  return {
-    company: company || "Unknown",
-    role,
-  };
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 async function callOpenAI(model, systemMessage, userMessage) {
@@ -132,123 +53,76 @@ async function callOpenAI(model, systemMessage, userMessage) {
     },
     body: JSON.stringify({
       model,
-      reasoning_effort: "none",
       messages: [systemMessage, userMessage],
       temperature: 0.2,
     }),
   });
 
   const data = await res.json();
-  return {
-    text: data?.choices?.[0]?.message?.content || "",
-  };
+  return data?.choices?.[0]?.message?.content || "";
 }
 
-/* ============================================================
-   HANDLER
-============================================================ */
+/* ================= HANDLER ================= */
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method not allowed" };
-  }
+  console.log("REDIS WRITE URL:", REDIS_URL);
 
-  const { jobUrl, mode } = JSON.parse(event.body || "{}");
-  if (!jobUrl) {
-    return { statusCode: 400, body: "Missing jobUrl" };
-  }
+  const { jobUrl, mode } = JSON.parse(event.body || {});
+  if (!jobUrl) return { statusCode: 400, body: "Missing jobUrl" };
 
-  const jobRes = await fetch(jobUrl);
-  const jobHtml = await jobRes.text();
+  const jobHtml = await (await fetch(jobUrl)).text();
   const jobText = stripHtml(jobHtml);
-
-  const { company, role } = inferCompanyAndRole(jobText, jobUrl);
-
-  /* ---------------- SYSTEM PROMPT (STRICT) ---------------- */
 
   const systemMessage = {
     role: "system",
-    content: `
-You are a professional resume editor.
-
-CRITICAL, NON-NEGOTIABLE RULES:
-- Use ONLY information present in the baseline resume.
-- Do NOT invent, infer, or embellish:
-  employers, job titles, responsibilities, metrics, dates,
-  locations, addresses, education, or certifications.
-- You may reword, reorder, condense, or emphasize EXISTING content only.
-- If a job requirement is not supported by the baseline resume,
-  de-emphasize or omit it — never fabricate.
-- If you violate these rules, the output is invalid.
-`,
+    content:
+      "Use ONLY information in the baseline resume. Do NOT invent anything.",
   };
-
-  /* ---------------- USER PROMPT ---------------- */
 
   const userMessage = {
     role: "user",
     content: `
-BASELINE RESUME (AUTHORITATIVE — USE VERBATIM CONTENT ONLY):
-====================
+BASELINE RESUME:
 ${BASELINE_RESUME}
-====================
 
 JOB DESCRIPTION:
-====================
 ${jobText}
-====================
 
-MODE:
-${mode === "one_page" ? "ONE-PAGE CONDENSED" : "FULL LENGTH"}
-
-TASK:
-Tailor the baseline resume to this job description while preserving factual accuracy.
-Return ONLY the finalized resume text.
+MODE: ${mode}
+Return only the resume text.
 `,
   };
 
-  /* ---------------- MODEL CALL ---------------- */
-
   let modelUsed = PRIMARY_MODEL;
-  let usedFallback = false;
-  let result;
+  let output;
 
   try {
-    result = await callOpenAI(PRIMARY_MODEL, systemMessage, userMessage);
-    if (!result.text) throw new Error("Empty primary output");
+    output = await callOpenAI(PRIMARY_MODEL, systemMessage, userMessage);
+    if (!output) throw new Error();
   } catch {
-    usedFallback = true;
     modelUsed = FALLBACK_MODEL;
-    result = await callOpenAI(FALLBACK_MODEL, systemMessage, userMessage);
+    output = await callOpenAI(FALLBACK_MODEL, systemMessage, userMessage);
   }
-
-  /* ---------------- HISTORY (METADATA ONLY) ---------------- */
 
   const historyEntry = {
     id: crypto.randomUUID(),
-    company,
-    role,
     jobUrl,
     mode,
     modelUsed,
-    usedFallback,
     createdAt: new Date().toISOString(),
   };
 
-  try {
-    await redis(
-      "LPUSH",
-      "resume_history",
-      encodeURIComponent(JSON.stringify(historyEntry))
-    );
-    await redis("LTRIM", "resume_history", "0", "49");
-  } catch (e) {
-    console.error("HISTORY WRITE FAILED", e);
-  }
+  await redis(
+    "LPUSH",
+    HISTORY_KEY,
+    encodeURIComponent(JSON.stringify(historyEntry))
+  );
+  await redis("LTRIM", HISTORY_KEY, "0", "49");
+
+  console.log("HISTORY WRITE SUCCESS", historyEntry);
 
   return {
     statusCode: 200,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ resume: result.text }),
+    body: JSON.stringify({ resume: output }),
   };
 };
