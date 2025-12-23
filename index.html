@@ -5,286 +5,237 @@
   <title>Resume Tailor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- JSZip for DOCX generation -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-
   <style>
-    :root {
-      --bg-main: #050b10;
-      --bg-panel: #1f2933;
-      --bg-input: #111827;
-      --border-subtle: #3b4252;
-      --text-primary: #f9fafb;
-      --text-secondary: #9ca3af;
-      --accent: #ff9900;
-      --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --font-mono: "SF Mono", Menlo, Consolas, monospace;
-    }
-
-    * { box-sizing: border-box; }
-
     body {
       margin: 0;
-      padding: 1rem;
-      min-height: 100vh;
-      font-family: var(--font-body);
-      background: radial-gradient(circle at top left, #111827 0, #020617 50%, #000 100%);
-      color: var(--text-primary);
-      display: flex;
-      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
     }
 
-    .container { width: 100%; max-width: 1200px; }
-
-    /* Top nav */
-    .nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(15,23,42,.95);
-      padding: .8rem 1rem;
-      border-radius: .6rem;
-      border: 1px solid rgba(148,163,184,.25);
-      margin-bottom: 1rem;
-    }
-
-    .nav-title { font-weight: 600; }
-    .nav-sub { font-size: .75rem; color: var(--text-secondary); }
-
-    /* Layout */
     .layout {
       display: grid;
-      gap: 1rem;
+      grid-template-columns: 220px 1fr;
+      height: 100vh;
     }
 
-    @media (min-width: 1024px) {
-      .layout { grid-template-columns: 220px 1fr; }
-    }
-
-    /* Sidebar */
     .sidebar {
-      background: rgba(15,23,42,.95);
-      border-radius: .7rem;
-      border: 1px solid rgba(148,163,184,.25);
-      padding: .6rem;
+      background: #020617;
+      padding: 1rem;
+      border-right: 1px solid #1e293b;
     }
 
-    .nav-link {
+    .sidebar a {
       display: block;
-      padding: .5rem .6rem;
-      border-radius: .4rem;
-      font-size: .85rem;
-      color: var(--text-secondary);
+      padding: 0.5rem;
+      color: #cbd5f5;
       text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 0.25rem;
       cursor: pointer;
     }
 
-    .nav-link.active {
-      background: rgba(55,65,81,.8);
-      color: var(--text-primary);
+    .sidebar a.active,
+    .sidebar a:hover {
+      background: #1e293b;
+      color: #fff;
     }
 
-    /* Cards */
-    .card {
-      background: rgba(15,23,42,.95);
-      border-radius: .8rem;
-      border: 1px solid rgba(148,163,184,.25);
-      padding: 1.2rem;
+    .main {
+      padding: 1.25rem;
+      overflow-y: auto;
     }
 
-    /* Inputs */
-    label {
-      display: block;
-      margin-top: .9rem;
-      margin-bottom: .3rem;
-      font-size: .75rem;
-      color: var(--text-secondary);
-      text-transform: uppercase;
+    h1 {
+      margin-top: 0;
     }
 
-    input, textarea {
+    input, textarea, button {
       width: 100%;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      padding: .6rem;
-      border-radius: .5rem;
-      color: var(--text-primary);
-      font-size: .9rem;
+      margin-top: 0.5rem;
+      background: #020617;
+      color: #e5e7eb;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.6rem;
+      font-size: 0.9rem;
     }
 
     textarea {
       min-height: 320px;
-      font-family: var(--font-mono);
+      white-space: pre-wrap;
     }
 
     button {
-      margin-top: .8rem;
-      background: var(--accent);
-      border: none;
-      color: #111827;
-      padding: .7rem 1rem;
-      border-radius: 999px;
-      font-weight: 600;
       cursor: pointer;
+      background: #f59e0b;
+      color: #020617;
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: .85rem;
+      margin-top: 1rem;
     }
 
     th, td {
+      border-bottom: 1px solid #334155;
+      padding: 0.6rem;
       text-align: left;
-      padding: .5rem;
-      border-bottom: 1px solid rgba(148,163,184,.2);
+      font-size: 0.85rem;
+    }
+
+    th {
+      color: #fbbf24;
+      font-weight: 600;
     }
 
     a.link {
-      color: var(--accent);
+      color: #38bdf8;
       text-decoration: none;
-    }
-
-    .muted {
-      color: var(--text-secondary);
-      font-size: .8rem;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+<div class="layout">
 
-    <!-- Top bar -->
-    <div class="nav">
-      <div>
-        <div class="nav-title">Resume Tailor</div>
-        <div class="nav-sub">AWS-style • GPT powered</div>
-      </div>
-      <div class="muted">Prototype</div>
-    </div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a id="nav-generate" class="active">Tailor Resume</a>
+    <a id="nav-history">History</a>
+  </aside>
 
-    <div class="layout">
+  <!-- MAIN -->
+  <main class="main">
 
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <a class="nav-link active" id="tabTailor">Tailor Resume</a>
-        <a class="nav-link" id="tabHistory">History</a>
-      </aside>
+    <!-- GENERATE VIEW -->
+    <section id="generate-view">
+      <h1>Generate Tailored Resume</h1>
 
-      <!-- Main panel -->
-      <div>
+      <label>Job Posting URL</label>
+      <input id="jobUrl" placeholder="https://company.com/job/123" />
 
-        <!-- Tailor panel -->
-        <div class="card" id="panelTailor">
-          <label>Job Posting URL</label>
-          <input id="jobUrl" placeholder="https://company.com/jobs/..." />
+      <label>Mode</label>
+      <select id="mode">
+        <option value="full">Full</option>
+        <option value="one_page">One Page</option>
+      </select>
 
-          <label>Mode</label>
-          <select id="mode">
-            <option value="full">Full Resume</option>
-            <option value="one_page">One Page</option>
-          </select>
+      <button id="generateBtn">Generate</button>
 
-          <button id="run">Generate Resume</button>
+      <label>Output</label>
+      <textarea id="output"></textarea>
+    </section>
 
-          <label>Output</label>
-          <textarea id="output"></textarea>
-        </div>
+    <!-- HISTORY VIEW -->
+    <section id="history-view" class="hidden">
+      <h1>History</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Company / Role</th>
+            <th>Link</th>
+            <th>Model</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="historyTable"></tbody>
+      </table>
+    </section>
 
-        <!-- History panel -->
-        <div class="card" id="panelHistory" style="display:none;">
-          <div id="historyContent" class="muted">Loading…</div>
-        </div>
+  </main>
+</div>
 
-      </div>
-    </div>
-  </div>
+<script>
+/* ------------------------
+   NAVIGATION
+------------------------- */
+const navGenerate = document.getElementById("nav-generate");
+const navHistory = document.getElementById("nav-history");
+const generateView = document.getElementById("generate-view");
+const historyView = document.getElementById("history-view");
 
-  <script>
-    const tabTailor = document.getElementById("tabTailor");
-    const tabHistory = document.getElementById("tabHistory");
-    const panelTailor = document.getElementById("panelTailor");
-    const panelHistory = document.getElementById("panelHistory");
-    const historyContent = document.getElementById("historyContent");
+navGenerate.onclick = () => {
+  navGenerate.classList.add("active");
+  navHistory.classList.remove("active");
+  generateView.classList.remove("hidden");
+  historyView.classList.add("hidden");
+};
 
-    function setTab(active) {
-      [tabTailor, tabHistory].forEach(t => t.classList.remove("active"));
-      active.classList.add("active");
-    }
+navHistory.onclick = () => {
+  navHistory.classList.add("active");
+  navGenerate.classList.remove("active");
+  generateView.classList.add("hidden");
+  historyView.classList.remove("hidden");
+  loadHistory();
+};
 
-    tabTailor.onclick = () => {
-      setTab(tabTailor);
-      panelTailor.style.display = "block";
-      panelHistory.style.display = "none";
+/* ------------------------
+   GENERATE
+------------------------- */
+document.getElementById("generateBtn").onclick = async () => {
+  const jobUrl = document.getElementById("jobUrl").value.trim();
+  const mode = document.getElementById("mode").value;
+  const output = document.getElementById("output");
+
+  output.value = "Generating…";
+
+  const res = await fetch("/.netlify/functions/tailor-resume", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobUrl, mode })
+  });
+
+  const data = await res.json();
+
+  // 🔴 THIS IS THE CRITICAL LINE THAT WAS BROKEN BEFORE
+  output.value = data.resume || "";
+};
+
+/* ------------------------
+   HISTORY
+------------------------- */
+async function loadHistory() {
+  const table = document.getElementById("historyTable");
+  table.innerHTML = "<tr><td colspan='4'>Loading…</td></tr>";
+
+  const res = await fetch("/.netlify/functions/history");
+  const data = await res.json();
+
+  if (!data.history || data.history.length === 0) {
+    table.innerHTML = "<tr><td colspan='4'>No history yet</td></tr>";
+    return;
+  }
+
+  table.innerHTML = "";
+
+  data.history.forEach(h => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${h.company || "N/A"}</td>
+      <td><a class="link" href="${h.jobUrl}" target="_blank">Link</a></td>
+      <td>${h.modelUsed}</td>
+      <td>${new Date(h.createdAt).toLocaleString()}</td>
+    `;
+
+    tr.onclick = () => {
+      navGenerate.onclick();
+      document.getElementById("jobUrl").value = h.jobUrl;
+      document.getElementById("mode").value = h.mode;
+      document.getElementById("output").value = h.output;
     };
 
-    tabHistory.onclick = async () => {
-      setTab(tabHistory);
-      panelTailor.style.display = "none";
-      panelHistory.style.display = "block";
-      loadHistory();
-    };
+    table.appendChild(tr);
+  });
+}
+</script>
 
-    async function loadHistory() {
-      historyContent.textContent = "Loading…";
-      try {
-        const res = await fetch("/.netlify/functions/history");
-        const data = await res.json();
-        const history = data.history || [];
-
-        if (!history.length) {
-          historyContent.textContent = "No history yet.";
-          return;
-        }
-
-        historyContent.innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Company</th>
-                <th>Role</th>
-                <th>Job</th>
-                <th>Model</th>
-                <th>Cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${history.map(h => `
-                <tr>
-                  <td>${h.company}</td>
-                  <td>${h.role}</td>
-                  <td><a class="link" href="${h.jobUrl}" target="_blank">Link</a></td>
-                  <td>${h.modelUsed}</td>
-                  <td>${h.cost?.estimated_cost_usd
-                    ? "$" + h.cost.estimated_cost_usd.toFixed(4)
-                    : "—"}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        `;
-      } catch {
-        historyContent.textContent = "Failed to load history.";
-      }
-    }
-
-    document.getElementById("run").onclick = async () => {
-      const jobUrl = document.getElementById("jobUrl").value;
-      const mode = document.getElementById("mode").value;
-      const output = document.getElementById("output");
-
-      output.value = "Generating…";
-
-      const res = await fetch("/.netlify/functions/tailor-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobUrl, mode })
-      });
-
-      const data = await res.json();
-      output.value = data.resume || "";
-    };
-  </script>
 </body>
 </html>
