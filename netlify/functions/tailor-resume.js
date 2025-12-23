@@ -163,6 +163,35 @@ async function callOpenAI({ model, systemMessage, userMessage }) {
   };
 }
 
+function inferCompanyAndRole(jobText, jobUrl) {
+  let company = "";
+  let role = "";
+
+  // Try common patterns first
+  const lines = jobText.split(/\n+/).map(l => l.trim()).filter(Boolean);
+
+  for (const line of lines.slice(0, 20)) {
+    if (!role && /(engineer|manager|lead|director|head|architect|consultant)/i.test(line)) {
+      role = line.slice(0, 120);
+    }
+    if (!company && /(inc\.?|corp\.?|llc|ltd|technologies|systems)/i.test(line)) {
+      company = line.slice(0, 120);
+    }
+  }
+
+  // Fallback: infer from hostname
+  if (!company && jobUrl) {
+    try {
+      company = new URL(jobUrl).hostname.replace("www.", "");
+    } catch {}
+  }
+
+  return {
+    company: company || "Unknown",
+    role: role || "Unknown role",
+  };
+}
+
 /* ------------------------
    Handler
 ------------------------ */
@@ -382,23 +411,26 @@ Task:
       cost,
     });
 
+const { company, role } = inferCompanyAndRole(jobText, jobUrl);
+    
     // Write history (best-effort)
-    const entry = {
-      id: crypto.randomUUID(),
-      jobUrl,
-      mode,
-      output: tailored,
-      createdAt: new Date().toISOString(),
-      modelUsed,
-      usedFallback,
-      usage: {
-        prompt_tokens: result.usage?.prompt_tokens || 0,
-        completion_tokens: result.usage?.completion_tokens || 0,
-        total_tokens: result.usage?.total_tokens || 0,
-      },
-      cost, // { estimated_cost_usd, pricing_model, pricing_note }
-    };
-
+   const entry = {
+  id: crypto.randomUUID(),
+  company,
+  role,
+  jobUrl,
+  mode,
+  output: tailored,
+  modelUsed,
+  usedFallback,
+  usage: {
+    prompt_tokens: result.usage?.prompt_tokens || 0,
+    completion_tokens: result.usage?.completion_tokens || 0,
+    total_tokens: result.usage?.total_tokens || 0,
+  },
+  cost, // { estimated_cost_usd, pricing_model, pricing_note }
+  createdAt: new Date().toISOString(),
+};
     try {
       await redis("LPUSH", "resume_history", encodeURIComponent(JSON.stringify(entry)));
       await redis("LTRIM", "resume_history", "0", "49");
