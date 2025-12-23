@@ -8,21 +8,21 @@ async function redis(command, ...args) {
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
   });
-  return res.text();
+  return res.json();
 }
 
 exports.handler = async () => {
   try {
-    const raw = await redis("LRANGE", "resume_history", "0", "49");
-    const parsed = JSON.parse(raw);
+    const data = await redis("LRANGE", "resume_history", "0", "49");
 
-    const list = Array.isArray(parsed)
-      ? parsed
-      : Array.isArray(parsed?.result)
-      ? parsed.result
+    // Upstash returns { result: [...] }
+    const rawList = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.result)
+      ? data.result
       : [];
 
-    const history = list
+    const history = rawList
       .map(item => {
         try {
           return JSON.parse(decodeURIComponent(item));
@@ -30,7 +30,17 @@ exports.handler = async () => {
           return null;
         }
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .map(entry => ({
+        id: entry.id,
+        company: entry.company || "Unknown",
+        role: entry.role || "Unknown role",
+        jobUrl: entry.jobUrl,
+        mode: entry.mode,
+        modelUsed: entry.modelUsed || "unknown",
+        cost: entry.cost || null,
+        createdAt: entry.createdAt,
+      }));
 
     return {
       statusCode: 200,
@@ -38,12 +48,11 @@ exports.handler = async () => {
       body: JSON.stringify({ history }),
     };
   } catch (err) {
+    console.error("HISTORY READ FAILED", err);
     return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: "History fetch failed",
-        details: String(err),
-      }),
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history: [] }),
     };
   }
 };
