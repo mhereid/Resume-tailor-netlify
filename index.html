@@ -541,38 +541,55 @@
       try { return new Date(iso).toLocaleString(); }
       catch { return iso || ""; }
     }
+// netlify/functions/history.js
 
-    async function renderHistory() {
-      setActiveTab("history");
-      historyList.innerHTML = "Loading…";
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-      const history = await loadHistory();
+async function redis(command, ...args) {
+  const res = await fetch(`${REDIS_URL}/${command}/${args.join("/")}`, {
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+  });
+  return res.json();
+}
 
-      if (!history.length) {
-        historyList.innerHTML = "<p class='small-note'>No history yet.</p>";
-        return;
-      }
+exports.handler = async () => {
+  try {
+    const resp = await redis("LRANGE", "resume_history", "0", "49");
 
-      historyList.innerHTML = history.map(h => {
-        const model = h.modelUsed || "—";
-        const fallback = h.usedFallback ? " (fallback)" : "";
-        const tokens = h.usage?.total_tokens;
-        const cost = h.cost?.estimated_cost_usd;
-        const pricingNote = h.cost?.pricing_note;
+    // Upstash may return { result: [...] } OR [...]
+    const raw =
+      Array.isArray(resp)
+        ? resp
+        : Array.isArray(resp?.result)
+        ? resp.result
+        : [];
 
-        return `
-          <div class="history-item" onclick="loadFromHistory('${h.id}')">
-            <div class="history-url">${h.jobUrl || ""}</div>
-            <div class="history-meta">
-              ${h.mode || ""} • ${fmtDate(h.createdAt)}<br/>
-              Model: ${model}${fallback} • Tokens: ${typeof tokens === "number" ? tokens : "—"} • Est. cost: ${fmtMoney(cost)}<br/>
-              <span style="opacity:.9">${pricingNote ? pricingNote : ""}</span>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
+    const history = raw
+      .map(item => {
+        try {
+          return JSON.parse(decodeURIComponent(item));
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
 
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history }),
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: "History fetch failed",
+        details: String(err),
+      }),
+    };
+  }
+};
     async function loadFromHistory(id) {
       const history = await loadHistory();
       const entry = history.find(h => h.id === id);
