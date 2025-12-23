@@ -1,5 +1,17 @@
 // netlify/functions/tailor-resume.js
 
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+async function redis(command, ...args) {
+  const res = await fetch(`${REDIS_URL}/${command}/${args.join("/")}`, {
+    headers: {
+      Authorization: `Bearer ${REDIS_TOKEN}`,
+    },
+  });
+  return res.json();
+}
+
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const OPENAI_MODEL = "gpt-5.2";
 
