@@ -13,65 +13,40 @@ const MODEL = "gpt-5.2";
 ================================ */
 const BASELINE_RESUME = `
 MIKE HEREID
+San Diego, CA | 636.236.9425 | michael.hereid@gmail.com
 
-San Diego, CA | 636-236-9425 | mike@mhere.id | LinkedIn: linkedin.com/in/mhereid
+SUMMARY  
+Cloud transformation and AI/ML delivery leader guiding enterprise and public-sector organizations through large-scale modernization, platform migrations, and AI-enabled product delivery. Trusted executive advisor who aligns product, engineering, and business stakeholders, establishes delivery governance, and accelerates time to value across complex, regulated environments. Manages a strategic customer portfolio exceeding $140M ARR and has generated $17.4M in directly measurable revenue across cloud and AI initiatives.
 
-⸻
+CORE STRENGTHS  
+Cloud Migration & Modernization | AI/ML Strategy & Delivery Oversight | Stakeholder Engagement  
+Cross-Functional Leadership | Delivery Governance & Operating Mechanisms | Risk/Issue Management  
+SaaS Product Enablement | Accelerating Customer Time to Value | Portfolio & Program Leadership  
 
-SUMMARY
+PROFESSIONAL EXPERIENCE  
+AMAZON WEB SERVICES (AWS) — Senior Customer Solutions Manager | Remote | 2022 – Present  
+Lead enterprise cloud modernization and AI/ML initiatives across education technology, public safety, and government; provide executive advisory and delivery oversight for multi-year programs. Own a customer portfolio exceeding $140M ARR.  
+-	Led migration of a statewide contact center platform (~2M monthly calls) to the cloud; drove multi-wave execution, cross-functional coordination, and risk/issue management; generated $12M ARR and established repeatable migration mechanisms.  
+-	Served as delivery lead for AI platform migration for a global online learning/tutoring platform; guided evaluation, readiness planning, phased rollout, and performance validation; achieved 25–35% cost reduction, 15–20% accuracy improvement, and 99.99% reliability.  
+-	Provided delivery oversight for an AI workflow automation agent integrating with 700+ LMS APIs; aligned product/engineering on scope and success criteria and supported rollout readiness for a high-visibility release.  
+-	Oversaw delivery of custom AI content moderation for a K–12 learning platform (3M+ students); aligned product, engineering, and data science on quality thresholds, evaluation strategy, and responsible AI considerations.
+-	Advised senior product leadership on AI feasibility, data dependencies, and scalable integration patterns for a skills alignment/workforce pathway platform.  
+-	Built scalable operating mechanisms: designed a sell-through engagement model to clarify ownership and accelerate delivery; co-developed an AI opportunity qualification/readiness framework; created enablement mechanisms adopted across multiple AWS business units.  
 
-Customer Success and Cloud Delivery leader with 10+ years of experience driving large-scale transformation across education, public sector, and SaaS platforms. Senior Customer Solutions Manager at AWS, leading complex cloud, AI, and generative AI programs from strategy through production. Proven ability to operate in ambiguity, align executives with product and engineering teams, and deliver measurable improvements in platform performance, adoption, and time-to-value.
+UNIVERSITY OF CALIFORNIA, SAN DIEGO — Managing Director, Client Engagement | 2019 – 2022  
+Directed enterprise HR/Payroll transformation for a 40,000-employee institution; led 80+ cross-functional contributors and redesigned major operational units.  
+-	Delivered a 61% reduction in paper check usage, generating $496K in annual savings through process and operating model improvements.  
 
-⸻
+HURON CONSULTING GROUP — Manager, Public Sector Consulting | 2011 – 2019  
+Led multi-campus ERP modernization programs spanning technical and functional teams.  
+-	Oversaw data conversion for 200,000+ employees and coordinated testing across 75+ experts; redesigned 28 enterprise business processes to support modernization outcomes.  
 
-PROFESSIONAL EXPERIENCE
+EDUCATION  
+Washington University in St. Louis — B.S.B.A., Finance, Economics & Strategy, Entrepreneurship  
 
-AMAZON WEB SERVICES — Senior Customer Solutions Manager
+CERTIFICATIONS  
+AWS Solutions Architect – Associate (2022) | AWS Machine Learning – Associate (2025) | Six Sigma Black Belt
 
-San Diego, CA | Aug 2022–Present
-• Own senior delivery leadership for multiple strategic and enterprise-scale customers, concurrently driving complex cloud, AI, and generative AI programs while serving as the primary executive-facing advisor and escalation owner.
-• Led an end-to-end migration of a large, production generative AI platform from a third-party provider to AWS, delivering 25–35% operating cost reduction, 99.99% service reliability, and 15–20% improvement in response accuracy while strengthening data governance and model customization.
-• Directed a targeted optimization initiative for a student-facing AI-powered question-and-answer system, increasing answer accuracy from ~52% to 73% on high-difficulty problem sets through model benchmarking, automated evaluation pipelines, and prompt optimization.
-• Designed and delivered an enterprise-scale accessibility compliance solution for a large learning platform ahead of regulatory deadlines.
-• Managed a time-bound generative AI engagement reducing manual correction from 37% to <10%.
-• Led implementation of an AI-powered workflow agent integrating 700+ production APIs.
-• Designed a scalable migration framework reducing timelines from ~90 days to ~30 days.
-• Delivered AI-assisted documentation and summarization for mission-critical records platforms.
-• Led one of AWS’s largest contact-center migrations supporting millions of monthly interactions.
-
-⸻
-
-UNIVERSITY OF CALIFORNIA, SAN DIEGO — Managing Director, Client Engagement
-
-San Diego, CA | Aug 2019–Aug 2022
-• Led enterprise HR, Payroll, and shared services transformation.
-• Designed an integrated operations center supporting 40,000+ employees.
-• Managed 80+ cross-functional staff.
-• Reduced manual processing by 60%+ using Six Sigma methods.
-
-⸻
-
-HURON CONSULTING GROUP — Manager
-
-Feb 2011–Aug 2019
-• Led large-scale ERP implementations.
-• Directed data conversion for 200,000+ employees.
-• Planned enterprise testing for systems supporting 50,000+ users.
-• Led future-state process design across 25+ workflows.
-
-⸻
-
-EDUCATION
-
-Bachelor of Science in Business Administration  
-Washington University in St. Louis
-
-⸻
-
-CERTIFICATIONS
-• AWS Certified Solutions Architect – Associate  
-• AWS Certified Machine Learning – Associate  
-• Six Sigma Black Belt
 `;
 
 async function redis(command, ...args) {
