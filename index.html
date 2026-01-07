@@ -4,238 +4,651 @@
   <meta charset="UTF-8" />
   <title>Resume Tailor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
 
   <style>
+    :root {
+      --bg: #0b1220;
+      --panel: rgba(15, 23, 42, 0.92);
+      --panel-2: rgba(2, 6, 23, 0.55);
+      --border: rgba(148, 163, 184, 0.18);
+      --border-strong: rgba(148, 163, 184, 0.28);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --muted-2: #94a3b8;
+      --accent: #ff9900;
+      --accent-2: #f59e0b;
+      --danger: #fb7185;
+      --ok: #34d399;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --shadow: 0 20px 60px rgba(0,0,0,0.45);
+      --r-lg: 16px;
+      --r-md: 12px;
+      --r-sm: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
+      font-family: var(--sans);
+      background:
+        radial-gradient(900px 500px at 18% 10%, rgba(255,153,0,0.10), transparent 55%),
+        radial-gradient(700px 460px at 90% 20%, rgba(56,189,248,0.08), transparent 55%),
+        radial-gradient(700px 520px at 55% 92%, rgba(34,197,94,0.06), transparent 55%),
+        linear-gradient(180deg, #050814 0%, #020617 60%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
     }
 
-    .layout {
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 18px 18px 28px;
+    }
+
+    /* Top nav */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: var(--r-lg);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, var(--accent) 0%, #ffb340 100%);
+      box-shadow: 0 10px 22px rgba(255,153,0,0.18);
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+      min-width: 0;
+    }
+
+    .brand-title .name {
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-title .sub {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pill {
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--border-strong);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(2, 6, 23, 0.35);
+    }
+
+    /* Layout */
+    .grid {
       display: grid;
-      grid-template-columns: 220px 1fr;
-      height: 100vh;
+      gap: 14px;
+      margin-top: 14px;
     }
 
+    @media (min-width: 1024px) {
+      .grid {
+        grid-template-columns: 260px minmax(0, 1fr);
+        align-items: start;
+      }
+    }
+
+    /* Sidebar */
     .sidebar {
-      background: #020617;
-      padding: 1rem;
-      border-right: 1px solid #1e293b;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
     }
 
-    .sidebar a {
-      display: block;
-      padding: 0.5rem;
-      color: #cbd5f5;
+    .sidebar h3 {
+      margin: 6px 8px 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .navlink {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: var(--muted-2);
       text-decoration: none;
-      border-radius: 6px;
-      margin-bottom: 0.25rem;
-      cursor: pointer;
+      cursor: default;
+      user-select: none;
+      border: 1px solid transparent;
     }
 
-    .sidebar a.active,
-    .sidebar a:hover {
-      background: #1e293b;
-      color: #fff;
+    .navlink.active {
+      color: var(--text);
+      background: rgba(148, 163, 184, 0.10);
+      border-color: rgba(148, 163, 184, 0.14);
     }
 
-    .main {
-      padding: 1.25rem;
-      overflow-y: auto;
+    .navicon {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: rgba(148, 163, 184, 0.35);
     }
 
-    h1 {
-      margin-top: 0;
+    .navlink.active .navicon {
+      background: rgba(255, 153, 0, 0.85);
+      box-shadow: 0 8px 18px rgba(255,153,0,0.18);
     }
 
-    input, textarea, button {
+    .help {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--panel-2);
+      border: 1px dashed rgba(148, 163, 184, 0.22);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    /* Main card */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .cardhead {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .cardhead h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.01em;
+    }
+
+    .cardhead p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 68ch;
+    }
+
+    .badge {
+      font-size: 12px;
+      color: rgba(255,153,0,0.95);
+      border: 1px solid rgba(255,153,0,0.25);
+      background: rgba(255,153,0,0.08);
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* Form */
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input[type="url"] {
       width: 100%;
-      margin-top: 0.5rem;
-      background: #020617;
-      color: #e5e7eb;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      padding: 0.6rem;
-      font-size: 0.9rem;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-strong);
+      background: rgba(2, 6, 23, 0.55);
+      color: var(--text);
+      outline: none;
+      transition: 150ms border, 150ms box-shadow;
     }
 
-    textarea {
-      min-height: 320px;
-      white-space: pre-wrap;
+    input[type="url"]:focus {
+      border-color: rgba(255,153,0,0.65);
+      box-shadow: 0 0 0 3px rgba(255,153,0,0.15);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .toggle {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(2, 6, 23, 0.38);
+    }
+
+    .radio {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted-2);
+      user-select: none;
+    }
+
+    .radio input {
+      accent-color: var(--accent);
+      transform: translateY(1px);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
     }
 
     button {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 12px 14px;
+      font-weight: 650;
       cursor: pointer;
-      background: #f59e0b;
-      color: #020617;
-      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: 150ms transform, 150ms box-shadow, 150ms border, 150ms background;
+      user-select: none;
     }
 
-    .hidden {
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent) 0%, #ffb340 100%);
+      color: #111827;
+      box-shadow: 0 16px 40px rgba(255,153,0,0.18);
+    }
+
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0px); }
+
+    .btn-ghost {
+      background: rgba(2, 6, 23, 0.25);
+      color: var(--muted-2);
+      border-color: rgba(148, 163, 184, 0.22);
+    }
+    .btn-ghost:hover {
+      border-color: rgba(255,153,0,0.45);
+      color: rgba(255,153,0,0.95);
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(17,24,39,0.25);
+      border-top-color: rgba(17,24,39,0.85);
+      animation: spin 700ms linear infinite;
       display: none;
     }
 
-    table {
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 16px;
+      line-height: 1.4;
+    }
+
+    .status.ok { color: rgba(52, 211, 153, 0.95); }
+    .status.err { color: rgba(251, 113, 133, 0.95); }
+
+    /* Output */
+    .split {
+      display: grid;
+      gap: 14px;
+    }
+
+    @media (min-width: 980px) {
+      .split {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .pane {
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(2, 6, 23, 0.42);
+      border-radius: var(--r-lg);
+      padding: 12px;
+    }
+
+    .panehead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .panehead .title {
+      font-size: 12px;
+      color: rgba(255,153,0,0.95);
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      font-weight: 650;
+    }
+
+    textarea {
       width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
+      min-height: 420px;
+      resize: vertical;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(2, 6, 23, 0.55);
+      color: var(--text);
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.45;
+      outline: none;
     }
 
-    th, td {
-      border-bottom: 1px solid #334155;
-      padding: 0.6rem;
-      text-align: left;
-      font-size: 0.85rem;
+    textarea:focus {
+      border-color: rgba(255,153,0,0.55);
+      box-shadow: 0 0 0 3px rgba(255,153,0,0.12);
     }
 
-    th {
-      color: #fbbf24;
-      font-weight: 600;
+    .note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
     }
 
-    a.link {
-      color: #38bdf8;
-      text-decoration: none;
+    .kbd {
+      font-family: var(--mono);
+      border: 1px solid rgba(148,163,184,0.25);
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(2,6,23,0.45);
+      color: var(--muted-2);
+      font-size: 11px;
     }
   </style>
 </head>
 
 <body>
-<div class="layout">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="brand-title">
+          <div class="name">Resume Tailor</div>
+          <div class="sub">AWS-dark UI · Baseline-only tailoring · Model: gpt-5.2</div>
+        </div>
+      </div>
+      <div class="pill">mjsmrh.netlify.app</div>
+    </div>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <a id="nav-generate" class="active">Tailor Resume</a>
-    <a id="nav-history">History</a>
-  </aside>
+    <div class="grid">
+      <aside class="sidebar">
+        <h3>Navigation</h3>
+        <div class="navlink active">
+          <div class="navicon"></div>
+          <div>Tailor Resume</div>
+        </div>
 
-  <!-- MAIN -->
-  <main class="main">
+        <div class="help">
+          <div style="font-weight:650;color:#e5e7eb;margin-bottom:6px;">Rules</div>
+          <div>• Baseline resume is the sole source of truth.</div>
+          <div>• No new jobs, dates, skills, addresses, or achievements.</div>
+          <div style="margin-top:8px;">Debug tip: open DevTools → Console and look for logs starting with <span class="kbd">[UI]</span>.</div>
+        </div>
+      </aside>
 
-    <!-- GENERATE VIEW -->
-    <section id="generate-view">
-      <h1>Generate Tailored Resume</h1>
+      <main class="card">
+        <div class="cardhead">
+          <div>
+            <h1>Generate a tailored resume</h1>
+            <p>Paste a job posting URL. The function scrapes the job text and rewrites your resume to align—without inventing anything.</p>
+          </div>
+          <div class="badge">ATS-friendly text output</div>
+        </div>
 
-      <label>Job Posting URL</label>
-      <input id="jobUrl" placeholder="https://company.com/job/123" />
+        <div class="split">
+          <section class="pane">
+            <div class="panehead">
+              <div class="title">Job Posting</div>
+            </div>
 
-      <label>Mode</label>
-      <select id="mode">
-        <option value="full">Full</option>
-        <option value="one_page">One Page</option>
-      </select>
+            <label for="jobUrl">Job URL</label>
+            <input id="jobUrl" type="url" placeholder="https://company.com/jobs/role" />
 
-      <button id="generateBtn">Generate</button>
+            <label>Mode</label>
+            <div class="toggle" role="group" aria-label="mode">
+              <label class="radio">
+                <input type="radio" name="mode" value="full" checked />
+                Full resume
+              </label>
+              <label class="radio">
+                <input type="radio" name="mode" value="one_page" />
+                One-page
+              </label>
+            </div>
 
-      <label>Output</label>
-      <textarea id="output"></textarea>
-    </section>
+            <div class="actions">
+              <button class="btn-primary" id="runButton">
+                <span id="btnText">Generate</span>
+                <span class="spinner" id="spinner" aria-hidden="true"></span>
+              </button>
 
-    <!-- HISTORY VIEW -->
-    <section id="history-view" class="hidden">
-      <h1>History</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Company / Role</th>
-            <th>Link</th>
-            <th>Model</th>
-            <th>Created</th>
-          </tr>
-        </thead>
-        <tbody id="historyTable"></tbody>
-      </table>
-    </section>
+              <button class="btn-ghost" id="copyBtn" type="button">Copy</button>
+              <button class="btn-ghost" id="downloadTxtBtn" type="button">Download .txt</button>
+              <button class="btn-ghost" id="clearBtn" type="button">Clear</button>
+            </div>
 
-  </main>
-</div>
+            <div class="status" id="status"></div>
 
-<script>
-/* ------------------------
-   NAVIGATION
-------------------------- */
-const navGenerate = document.getElementById("nav-generate");
-const navHistory = document.getElementById("nav-history");
-const generateView = document.getElementById("generate-view");
-const historyView = document.getElementById("history-view");
+            <div class="note">
+              If you see a 400/500, click the request in DevTools → Network and read the JSON response.
+            </div>
+          </section>
 
-navGenerate.onclick = () => {
-  navGenerate.classList.add("active");
-  navHistory.classList.remove("active");
-  generateView.classList.remove("hidden");
-  historyView.classList.add("hidden");
-};
+          <section class="pane">
+            <div class="panehead">
+              <div class="title">Output</div>
+              <div style="color:var(--muted);font-size:12px;">Plain text</div>
+            </div>
 
-navHistory.onclick = () => {
-  navHistory.classList.add("active");
-  navGenerate.classList.remove("active");
-  generateView.classList.add("hidden");
-  historyView.classList.remove("hidden");
-  loadHistory();
-};
+            <textarea id="output" placeholder="Tailored resume will appear here..."></textarea>
 
-/* ------------------------
-   GENERATE
-------------------------- */
-document.getElementById("generateBtn").onclick = async () => {
-  const jobUrl = document.getElementById("jobUrl").value.trim();
-  const mode = document.getElementById("mode").value;
-  const output = document.getElementById("output");
+            <div class="note">
+              Pro tip: <span class="kbd">⌘F</span> in the output to check keywords from the posting.
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
 
-  output.value = "Generating…";
+  <script>
+    console.log("[UI] index.html loaded", new Date().toISOString());
 
-  const res = await fetch("/.netlify/functions/tailor-resume", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobUrl, mode })
-  });
+    const runButton = document.getElementById("runButton");
+    const spinner = document.getElementById("spinner");
+    const btnText = document.getElementById("btnText");
+    const statusEl = document.getElementById("status");
+    const outputEl = document.getElementById("output");
+    const jobUrlEl = document.getElementById("jobUrl");
+    const copyBtn = document.getElementById("copyBtn");
+    const downloadTxtBtn = document.getElementById("downloadTxtBtn");
+    const clearBtn = document.getElementById("clearBtn");
 
-  const data = await res.json();
+    function setStatus(text, kind) {
+      statusEl.textContent = text || "";
+      statusEl.classList.remove("ok", "err");
+      if (kind === "ok") statusEl.classList.add("ok");
+      if (kind === "err") statusEl.classList.add("err");
+    }
 
-  // 🔴 THIS IS THE CRITICAL LINE THAT WAS BROKEN BEFORE
-  output.value = data.resume || "";
-};
+    function setLoading(isLoading) {
+      runButton.disabled = isLoading;
+      spinner.style.display = isLoading ? "inline-block" : "none";
+      btnText.textContent = isLoading ? "Generating..." : "Generate";
+    }
 
-/* ------------------------
-   HISTORY
-------------------------- */
-async function loadHistory() {
-  const table = document.getElementById("historyTable");
-  table.innerHTML = "<tr><td colspan='4'>Loading…</td></tr>";
+    function getMode() {
+      const checked = document.querySelector('input[name="mode"]:checked');
+      return checked ? checked.value : "full";
+    }
 
-  const res = await fetch("/.netlify/functions/history");
-  const data = await res.json();
+    async function fetchJsonDebug(url, options) {
+      console.log("[UI] fetch", url, options?.method || "GET");
+      const res = await fetch(url, options);
+      const text = await res.text();
+      console.log("[UI] status", res.status);
+      console.log("[UI] raw (first 1200)", text.slice(0, 1200));
+      let json = null;
+      try { json = JSON.parse(text); } catch {}
+      return { res, text, json };
+    }
 
-  if (!data.history || data.history.length === 0) {
-    table.innerHTML = "<tr><td colspan='4'>No history yet</td></tr>";
-    return;
-  }
+    runButton.addEventListener("click", async () => {
+      const jobUrl = (jobUrlEl.value || "").trim();
+      const mode = getMode();
 
-  table.innerHTML = "";
+      if (!jobUrl) {
+        setStatus("Enter a job posting URL.", "err");
+        return;
+      }
 
-  data.history.forEach(h => {
-    const tr = document.createElement("tr");
+      setLoading(true);
+      setStatus("Requesting tailored resume…");
+      outputEl.value = "";
 
-    tr.innerHTML = `
-      <td>${h.company || "N/A"}</td>
-      <td><a class="link" href="${h.jobUrl}" target="_blank">Link</a></td>
-      <td>${h.modelUsed}</td>
-      <td>${new Date(h.createdAt).toLocaleString()}</td>
-    `;
+      try {
+        const { res, json } = await fetchJsonDebug("/.netlify/functions/tailor-resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobUrl, mode }),
+        });
 
-    tr.onclick = () => {
-      navGenerate.onclick();
-      document.getElementById("jobUrl").value = h.jobUrl;
-      document.getElementById("mode").value = h.mode;
-      document.getElementById("output").value = h.output;
-    };
+        if (!res.ok) {
+          const msg = json?.error
+            ? `Error: ${json.error}${json.stage ? " · " + json.stage : ""}`
+            : `Error: HTTP ${res.status}`;
+          setStatus(msg, "err");
+          console.error("[UI] server error payload", json);
+          return;
+        }
 
-    table.appendChild(tr);
-  });
-}
-</script>
+        const resume =
+          (typeof json?.resume === "string" && json.resume) || "";
 
+        if (!resume.trim()) {
+          setStatus("No resume text returned (empty output). Check console logs.", "err");
+          console.warn("[UI] empty resume payload", json);
+          return;
+        }
+
+        outputEl.value = resume;
+        setStatus("Done.", "ok");
+      } catch (e) {
+        console.error("[UI] fetch failed", e);
+        setStatus("Fetch failed (network or function crash). See console.", "err");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      const text = outputEl.value || "";
+      if (!text.trim()) return setStatus("Nothing to copy.", "err");
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus("Copied.", "ok");
+      } catch (e) {
+        console.error(e);
+        setStatus("Copy failed. Select and copy manually.", "err");
+      }
+    });
+
+    downloadTxtBtn.addEventListener("click", () => {
+      const text = outputEl.value || "";
+      if (!text.trim()) return setStatus("Nothing to download.", "err");
+
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "tailored_resume.txt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setStatus("Downloaded tailored_resume.txt", "ok");
+    });
+
+    clearBtn.addEventListener("click", () => {
+      jobUrlEl.value = "";
+      outputEl.value = "";
+      setStatus("");
+    });
+  </script>
 </body>
 </html>
