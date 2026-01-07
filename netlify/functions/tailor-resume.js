@@ -1,9 +1,8 @@
 // netlify/functions/tailor-resume.js
-// Purpose: Tailor a resume to a job description URL.
-// Constraint: Baseline resume is the sole source of truth. No fabrication.
+// Baseline-only tailoring, anti-hallucination hard mode (fact bank + constrained rewrite + output guard)
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-const MODEL = "gpt-5.2"; // use a model you actually have access to
+const MODEL = "gpt-5.2";
 
 function json(statusCode, obj) {
   return {
@@ -34,7 +33,6 @@ async function fetchHtml(url, timeoutMs = 15000) {
       redirect: "follow",
       signal: controller.signal,
       headers: {
-        // job boards often block serverless without a UA
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
         Accept:
@@ -59,8 +57,7 @@ async function fetchHtml(url, timeoutMs = 15000) {
 
 /* ================================
    BASELINE RESUME — FULL, VERBATIM
-   (SOLE SOURCE OF TRUTH)
-   NOTE: You asked earlier to remove Core Skills.
+   Sole source of truth.
 ================================ */
 const BASELINE_RESUME = `
 MIKE HEREID
@@ -125,6 +122,25 @@ CERTIFICATIONS
 • AWS Certified Machine Learning – Associate
 • Six Sigma Black Belt
 `;
+
+// Guardrail: reject specific “made up” patterns that tend to appear.
+// You can extend this list over time if the model keeps inventing stuff.
+const FORBIDDEN_PATTERNS = [
+  /\bdesigned\b.*\btool\b/i,
+  /\bbuilt\b.*\btool\b/i,
+  /\bautomated\b.*\bpipeline\b/i,
+  /\bdata pipeline\b/i,
+  /\b3–5\b|\b3-5\b/i, // if you don’t want ranges to appear unless baseline contains them
+  /\bdeployment waves?\b/i,
+  /\bplaybooks?\b/i,
+  /\bframeworks?\b/i, // if you want to avoid “framework” claims unless baseline includes
+  /\bhealth scoring\b/i,
+  /\bQBR\b/i,
+];
+
+function violatesForbiddenPatterns(text) {
+  return FORBIDDEN_PATTERNS.some((re) => re.test(text));
+}
 
 exports.handler = async (event) => {
   const reqId =
@@ -195,55 +211,65 @@ exports.handler = async (event) => {
       });
     }
 
+    stage = "build_prompt";
     const modeInstructions =
       mode === "one_page"
-        ? [
-            "Output should be approximately one page of text.",
-            "Aggressively prioritize the most relevant experience.",
-            "Compress older/less relevant roles into fewer bullets.",
-          ].join(" ")
-        : [
-            "Output may be multi-page if needed.",
-            "Preserve relevant detail and strong metrics.",
-          ].join(" ");
+        ? "ONE-PAGE MODE: Keep to ~1 page. Reduce bullets per role. Prefer 5–8 bullets for AWS, 2–3 for other roles. No new info."
+        : "FULL MODE: Keep all relevant baseline content. No new info.";
 
-    stage = "build_messages";
+    // Critical: constrain the model to ONLY use exact baseline bullet facts.
+    // We do this in two steps inside one completion:
+    // 1) Build a FACT BANK by extracting only claims present in baseline (verbatim fragments).
+    // 2) Produce the resume USING ONLY those facts; reordering and light rephrasing allowed, but no new details.
+
     const system = {
       role: "system",
       content: [
         "You are an expert resume writer.",
-        "The baseline resume is the ONLY source of truth.",
-        "You may ONLY rephrase, reorder, and selectively omit existing content.",
-        "You MUST NOT add new employers, clients, projects, responsibilities, tools, skills, titles, dates, locations, metrics, or outcomes not explicitly present in the baseline resume.",
-        "You MUST NOT change the candidate's name, location, contact info, employers, titles, or employment dates.",
-        "If the job description asks for something not in the baseline resume, do not invent it; instead emphasize the closest existing experience.",
-        "Return only the tailored resume in plain text (ATS-friendly). No commentary.",
+        "Hard constraint: The baseline resume is the ONLY source of truth.",
+        "You must not invent or infer any new tools, systems, processes, teams, counts, waves, pipelines, playbooks, frameworks, or responsibilities.",
+        "You must not change name, location, contact info, employers, titles, or dates.",
+        "If a concept is not explicitly in the baseline, you cannot include it.",
+        "Output must be ATS-friendly plain text (no tables).",
       ].join(" "),
     };
 
     const user = {
       role: "user",
       content: `
-BASELINE RESUME (SOLE SOURCE OF TRUTH):
+You must follow this process:
+
+STEP 1 — FACT BANK
+Extract a 'FACT BANK' as a list of bullets that are DIRECTLY present in the baseline resume.
+Rules:
+- Each fact must be supported by an exact phrase from the baseline.
+- Do not add specificity. Do not infer tools, counts, or methods.
+- Keep facts short and literal.
+
+STEP 2 — TAILORED RESUME
+Write a tailored resume that aligns to the job description USING ONLY facts from the FACT BANK.
+Rules:
+- You may reorder and lightly rephrase facts but you may NOT add new nouns/details.
+- Do not mention anything not in the baseline.
+- Keep contact block exactly as baseline.
+
+${modeInstructions}
+
+BASELINE RESUME:
 ==== START BASELINE ====
 ${BASELINE_RESUME}
 ==== END BASELINE ====
 
-JOB DESCRIPTION (SCRAPED):
+JOB DESCRIPTION:
 ==== START JOB ====
 ${jobText}
 ==== END JOB ====
 
-MODE:
-${modeInstructions}
-
-TASK:
-Tailor the resume to align with the job description.
-- Reorder sections and bullets to match priorities.
-- Rewrite summary to mirror job language while remaining truthful to baseline.
-- Keep all employers/titles/dates/contact exactly as baseline.
-- Do not fabricate anything.
-Return ONLY the final tailored resume.
+Output format:
+- First print the line: "FACT BANK:"
+- Then the fact bank bullets
+- Then print the line: "RESUME:"
+- Then the final tailored resume text.
 `,
     };
 
@@ -257,7 +283,7 @@ Return ONLY the final tailored resume.
       body: JSON.stringify({
         model: MODEL,
         messages: [system, user],
-        temperature: 0.2,
+        temperature: 0.0, // clamp creativity
       }),
     });
 
@@ -280,12 +306,41 @@ Return ONLY the final tailored resume.
     }
 
     stage = "extract_output";
-    const resume = data?.choices?.[0]?.message?.content || "";
-    if (!resume || resume.trim().length === 0) {
+    const content = data?.choices?.[0]?.message?.content || "";
+    if (!content.trim()) {
+      return json(502, { error: "EMPTY_MODEL_OUTPUT", reqId });
+    }
+
+    // Split out the resume portion.
+    const idx = content.indexOf("RESUME:");
+    if (idx === -1) {
       return json(502, {
-        error: "EMPTY_MODEL_OUTPUT",
+        error: "MALFORMED_MODEL_OUTPUT",
         reqId,
-        debug: { keys: data ? Object.keys(data) : null },
+        details: "Missing 'RESUME:' section",
+        bodyPreview: content.slice(0, 1200),
+      });
+    }
+
+    const resume = content.slice(idx + "RESUME:".length).trim();
+    if (!resume) {
+      return json(502, {
+        error: "EMPTY_RESUME_SECTION",
+        reqId,
+        bodyPreview: content.slice(0, 1200),
+      });
+    }
+
+    stage = "guardrails";
+    if (violatesForbiddenPatterns(resume)) {
+      return json(409, {
+        error: "HALLUCINATION_GUARD_TRIGGERED",
+        reqId,
+        message:
+          "Output contained forbidden invented patterns. Tighten baseline phrasing or extend forbidden list.",
+        // Helpful debugging:
+        offendingPatterns: FORBIDDEN_PATTERNS.map((r) => r.toString()),
+        resumePreview: resume.slice(0, 1600),
       });
     }
 
@@ -299,7 +354,6 @@ Return ONLY the final tailored resume.
       },
     });
   } catch (err) {
-    // Hard catch-all: ALWAYS JSON, never Netlify text/plain 500
     return json(500, {
       error: "UNHANDLED_SERVER_ERROR",
       reqId,
